@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Kafka Fraud Detection Dashboard</title>
+    <style>
+        :root {
+            --bg-page: #f3f4f6;
+            --bg-card: #ffffff;
+            --bg-chip: #eef2ff;
+            --border-subtle: #e5e7eb;
+            --border-strong: #d1d5db;
+            --text-main: #111827;
+            --text-muted: #6b7280;
+            --accent: #2563eb;
+            --accent-soft: #dbeafe;
+            --accent-strong: #1d4ed8;
+            --shadow-soft: 0 8px 20px rgba(15, 23, 42, 0.06);
+            --radius-card: 12px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+            sans-serif;
+            background-color: var(--bg-page);
+            color: var(--text-main);
+        }
+
+        .page {
+            max-width: 1200px;
+            margin: 24px auto 40px;
+            padding: 0 16px 24px;
+        }
+
+        /* Header */
+
+        .header {
+            background: linear-gradient(120deg, #1d4ed8, #0ea5e9);
+            color: #f9fafb;
+            border-radius: 18px;
+            padding: 20px 22px 16px;
+            margin-bottom: 10px;
+            box-shadow: 0 12px 25px rgba(15, 23, 42, 0.25);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .header-main {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .header-title {
+            font-size: 1.6rem;
+            font-weight: 650;
+            letter-spacing: 0.01em;
+        }
+
+        /* Config bar under header */
+
+        .config-bar {
+            margin: 6px 0 18px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background-color: #e0f2fe;
+            border: 1px solid #bae6fd;
+            font-size: 0.78rem;
+            color: #0f172a;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .config-label {
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.72rem;
+            letter-spacing: 0.04em;
+            color: #0369a1;
+        }
+
+        .config-item {
+            padding: 2px 8px;
+            border-radius: 999px;
+            background-color: #f0f9ff;
+            border: 1px solid #bae6fd;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* KPI cards */
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 14px;
+            margin-bottom: 16px;
+        }
+
+        .card {
+            background-color: var(--bg-card);
+            border-radius: var(--radius-card);
+            border: 1px solid var(--border-subtle);
+            padding: 12px 14px 12px;
+            box-shadow: var(--shadow-soft);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .card-title {
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            letter-spacing: 0.04em;
+        }
+
+        .card-tag {
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 999px;
+            background-color: var(--accent-soft);
+            color: var(--accent-strong);
+            border: 1px solid rgba(37, 99, 235, 0.15);
+        }
+
+        .card-value {
+            font-size: 1.6rem;
+            font-weight: 600;
+            line-height: 1.3;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .card-subtext {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        /* Toolbar */
+
+        .toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 4px 0 16px;
+            gap: 10px;
+        }
+
+        .toolbar-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .toolbar-right {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 2px;
+        }
+
+        .btn {
+            padding: 6px 12px;
+            font-size: 0.82rem;
+            border-radius: 999px;
+            border: 1px solid var(--border-strong);
+            background-color: #f9fafb;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn:hover {
+            background-color: #e5e7eb;
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+        }
+
+        .btn-icon {
+            font-size: 0.85rem;
+        }
+
+        .last-updated {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+        }
+
+        .run-timer {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Layout for tables + charts */
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: minmax(260px, 360px) minmax(360px, 1fr);
+            gap: 20px;
+            align-items: flex-start;
+        }
+
+        @media (max-width: 900px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background-color: var(--bg-card);
+            border-radius: var(--radius-card);
+            border: 1px solid var(--border-subtle);
+            padding: 12px 14px 14px;
+            box-shadow: var(--shadow-soft);
+            margin-bottom: 12px;
+        }
+
+        .panel-title {
+            font-size: 0.97rem;
+            font-weight: 550;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-title span {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        /* Tables */
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 4px;
+        }
+
+        th, td {
+            border: 1px solid var(--border-subtle);
+            padding: 4px 7px;
+            font-size: 0.8rem;
+        }
+
+        th {
+            background-color: #f9fafb;
+            text-align: left;
+            font-weight: 500;
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: #f9fafb;
+        }
+
+        /* Percentiles + chart wrappers */
+
+        .percentiles {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 7px;
+            border-radius: 999px;
+            border: 1px solid var(--border-subtle);
+            background-color: #f3f4ff;
+            font-size: 0.78rem;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .badge-strong {
+            background-color: #dbeafe;
+            border-color: #93c5fd;
+            font-weight: 600;
+        }
+
+        .chart-wrapper {
+            margin-top: 4px;
+            position: relative;
+        }
+
+        canvas {
+            width: 100% !important;
+        }
+
+        .placeholder {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            pointer-events: none;
+        }
+
+    </style>
+</head>
+<body>
+<div class="page">
+    <!-- Header -->
+    <header class="header">
+        <div class="header-main">
+            <div class="header-title">Kafka Fraud Detection Dashboard</div>
+        </div>
+    </header>
+
+    <!-- Experiment configuration bar -->
+    <div class="config-bar" id="configBar">
+        <span class="config-label">Current experiment</span>
+        <!-- Filled by JS -->
+    </div>
+
+    <!-- Top KPI cards -->
+    <section class="cards-grid">
+        <!-- Total alerts -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">Total alerts</div>
+                <div class="card-tag">Alerts</div>
+            </div>
+            <div class="card-value" id="totalAlerts">–</div>
+            <div class="card-subtext">All fraud alerts emitted since last reset</div>
+        </div>
+
+        <!-- Alerts per second -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">Alerts / second</div>
+                <div class="card-tag">Throughput</div>
+            </div>
+            <div class="card-value" id="alertsPerSecond">–</div>
+            <div class="card-subtext">Average alerts per second (consumer, moving window)</div>
+        </div>
+
+        <!-- Producer TPS -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">Producer TPS</div>
+                <div class="card-tag">Producer</div>
+            </div>
+            <div class="card-value" id="producerTps">–</div>
+            <div class="card-subtext">Effective transactions per second at broker</div>
+        </div>
+
+        <!-- Fraud-detection TPS -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">Fraud-detection TPS</div>
+                <div class="card-tag">Fraud</div>
+            </div>
+            <div class="card-value" id="fraudTps">–</div>
+            <div class="card-subtext">Transactions processed per second</div>
+        </div>
+
+        <!-- Average latency -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">Avg latency (ms)</div>
+                <div class="card-tag">Latency</div>
+            </div>
+            <div class="card-value" id="avgLatency">–</div>
+            <div class="card-subtext">Event → alert end-to-end</div>
+        </div>
+
+        <!-- Tail latency (P99) -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">Tail latency (P99, ms)</div>
+                <div class="card-tag">Latency</div>
+            </div>
+            <div class="card-value" id="p99Latency">–</div>
+            <div class="card-subtext">End-to-end latency for 99% of alerts</div>
+        </div>
+    </section>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+        <div class="toolbar-left">
+            <button class="btn" onclick="resetMetrics()">
+                <span class="btn-icon">↺</span>
+                <span>Reset metrics</span>
+            </button>
+        </div>
+        <div class="toolbar-right">
+            <div class="run-timer" id="runTimer">Run time: 00:00</div>
+            <div class="last-updated" id="lastUpdatedSecondary"></div>
+        </div>
+    </div>
+
+    <!-- Main layout: left (alerts & tables), right (latency + throughput) -->
+    <div class="main-grid">
+        <!-- Left column -->
+        <div>
+            <!-- Alerts by type table -->
+            <section class="panel">
+                <div class="panel-title">
+                    <span>Alerts by type</span>
+                    <span>Rule distribution</span>
+                </div>
+                <table id="alertsByTypeTable">
+                    <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Count</th>
+                    </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </section>
+
+            <!-- Latency by type -->
+            <section class="panel">
+                <div class="panel-title">
+                    <span>Latency by type (ms)</span>
+                    <span>Per rule</span>
+                </div>
+                <table id="latencyByTypeTable">
+                    <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Count</th>
+                        <th>Avg</th>
+                        <th>Min</th>
+                        <th>Max</th>
+                    </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+
+                <div class="chart-wrapper">
+                    <canvas id="alertsTypeChart" height="180"></canvas>
+                </div>
+            </section>
+        </div>
+
+        <!-- Right column -->
+        <div>
+            <!-- Latency percentiles -->
+            <section class="panel">
+                <div class="panel-title">
+                    <span>Latency distribution</span>
+                    <span>Percentiles (global)</span>
+                </div>
+                <div class="percentiles">
+                    <span class="badge" id="p50Badge">P50: –</span>
+                    <span class="badge" id="p90Badge">P90: –</span>
+                    <span class="badge badge-strong" id="p99Badge">P99: –</span>
+                    <span id="latencyCountInfo">Samples: –</span>
+                </div>
+            </section>
+
+            <!-- Throughput over time -->
+            <section class="panel">
+                <div class="panel-title">
+                    <span>Throughput over time</span>
+                    <span>Alerts / second</span>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="throughputChart" height="180"></canvas>
+                    <div class="placeholder" id="throughputPlaceholder">
+                        Throughput history will appear once alerts are flowing.
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+
+    let alertsTypeChart = null;
+    let throughputChart = null;
+
+    let localThroughputHistory = [];
+
+    // Run timer
+    let runStartTime = Date.now();
+    let runTimerInterval = null;
+
+    function startRunTimer() {
+        runStartTime = Date.now();
+        if (runTimerInterval) {
+            clearInterval(runTimerInterval);
+        }
+        runTimerInterval = setInterval(updateRunTimer, 1000);
+        updateRunTimer();
+    }
+
+    function updateRunTimer() {
+        const elapsedMs = Date.now() - runStartTime;
+        const totalSeconds = Math.floor(elapsedMs / 1000);
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+
+        const h = hours.toString().padStart(2, '0');
+        const m = minutes.toString().padStart(2, '0');
+        const s = seconds.toString().padStart(2, '0');
+
+        const el = document.getElementById('runTimer');
+        if (el) {
+            el.textContent = `Run time: ${h}:${m}:${s}`;
+        }
+    }
+
+    // Experiment config
+    const experimentConfig = {
+        acks: "all",
+        lingerMs: 5,
+        partitions: 6,
+        instances: 3,
+        profile: "benchmark"
+    };
+
+    function renderConfigBar() {
+        const bar = document.getElementById('configBar');
+        bar.innerHTML = '';
+
+        const label = document.createElement('span');
+        label.className = 'config-label';
+        label.textContent = 'Current experiment';
+        bar.appendChild(label);
+
+        const items = [
+            `acks = ${experimentConfig.acks}`,
+            `linger.ms = ${experimentConfig.lingerMs}`,
+            `partitions = ${experimentConfig.partitions}`,
+            `streams instances = ${experimentConfig.instances}`,
+            `producer profile = ${experimentConfig.profile}`
+        ];
+
+        items.forEach(text => {
+            const span = document.createElement('span');
+            span.className = 'config-item';
+            span.textContent = text;
+            bar.appendChild(span);
+        });
+    }
+
+    // -------------------------
+    // HELPERS
+    // -------------------------
+    async function fetchJson(url, options) {
+        const res = await fetch(url, options || {});
+        if (!res.ok) {
+            throw new Error(`HTTP ${res.status} for ${url}`);
+        }
+        return res.json();
+    }
+
+    function formatNumber(n, fractionDigits = 0) {
+        return Number(n || 0).toLocaleString(undefined, {
+            maximumFractionDigits: fractionDigits,
+            minimumFractionDigits: fractionDigits
+        });
+    }
+
+    // -------------------------
+    // DASHBOARD METRICS (/metrics/dashboard)
+    // -------------------------
+    async function loadDashboardMetrics() {
+        const data = await fetchJson('/metrics/dashboard');
+
+        const summary = data.summary || {};
+        const alertsByType = data.alertsByType || {};
+        const latencyByType = data.latencyByType || {};
+        const latencyPercentiles = data.latencyPercentiles || {};
+        const throughputSeries = data.throughputSeries || [];
+
+        document.getElementById('totalAlerts').textContent =
+            formatNumber(summary.totalAlerts || 0);
+        document.getElementById('alertsPerSecond').textContent =
+            formatNumber(summary.alertsPerSecond || 0, 2);
+        document.getElementById('avgLatency').textContent =
+            formatNumber(summary.latencyAvgMillis || 0, 1);
+
+        const p99 = latencyPercentiles.p99 || 0;
+        document.getElementById('p99Latency').textContent =
+            formatNumber(p99, 1);
+
+        const ts = 'Last updated: ' + new Date().toLocaleTimeString();
+        const lastUpdatedEl = document.getElementById('lastUpdatedSecondary');
+        if (lastUpdatedEl) {
+            lastUpdatedEl.textContent = ts;
+        }
+
+        updateAlertsAndLatencyByType(alertsByType, latencyByType);
+
+        updateLatencyPercentiles(latencyPercentiles);
+
+        await Promise.all([
+            loadProducerTps(),
+            loadFraudTps()
+        ]);
+
+        if (throughputSeries && throughputSeries.length > 0) {
+            localThroughputHistory = [];
+            updateThroughputFromSeries(throughputSeries);
+        } else {
+            const now = new Date();
+            localThroughputHistory.push({
+                label: now.toLocaleTimeString(undefined, { hour12: false }),
+                value: summary.alertsPerSecond || 0
+            });
+            if (localThroughputHistory.length > 60) {
+                localThroughputHistory.shift();
+            }
+
+            const labels = localThroughputHistory.map(p => p.label);
+            const values = localThroughputHistory.map(p => p.value);
+            updateThroughputChart(labels, values);
+        }
+    }
+
+    function updateAlertsAndLatencyByType(alertsByType, latencyByType) {
+        const tbodyAlerts = document.querySelector('#alertsByTypeTable tbody');
+        tbodyAlerts.innerHTML = '';
+
+        const sortedEntries = Object.entries(alertsByType)
+            .sort((a, b) => (b[1] || 0) - (a[1] || 0));
+
+        sortedEntries.forEach(([type, count]) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td>${type}</td><td>${formatNumber(count)}</td>`;
+            tbodyAlerts.appendChild(tr);
+        });
+
+        // Latency by type table
+        const tbodyLatency = document.querySelector('#latencyByTypeTable tbody');
+        tbodyLatency.innerHTML = '';
+
+        sortedEntries.forEach(([type]) => {
+            const stats = latencyByType[type] || {};
+            const measuredCount = stats.count || 0;
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${type}</td>
+                <td>${formatNumber(measuredCount)}</td>
+                <td>${formatNumber(stats.avgMillis || 0, 1)}</td>
+                <td>${formatNumber(stats.minMillis || 0)}</td>
+                <td>${formatNumber(stats.maxMillis || 0)}</td>
+            `;
+            tbodyLatency.appendChild(tr);
+        });
+
+        updateAlertsTypeChart(latencyByType);
+    }
+
+    function updateLatencyPercentiles(percentiles) {
+        document.getElementById('p50Badge').textContent =
+            `P50: ${formatNumber(percentiles.p50 || 0, 1)} ms`;
+        document.getElementById('p90Badge').textContent =
+            `P90: ${formatNumber(percentiles.p90 || 0, 1)} ms`;
+        document.getElementById('p99Badge').textContent =
+            `P99: ${formatNumber(percentiles.p99 || 0, 1)} ms`;
+        document.getElementById('latencyCountInfo').textContent =
+            `Samples: ${formatNumber(percentiles.count || 0)}`;
+    }
+
+    function updateThroughputFromSeries(series) {
+        const labels = [];
+        const data = [];
+
+        (series || []).forEach(point => {
+            const date = new Date(point.epochSecond * 1000);
+            const timeLabel = date.toLocaleTimeString(undefined, { hour12: false });
+            labels.push(timeLabel);
+            data.push(point.alerts || 0);
+        });
+
+        updateThroughputChart(labels, data);
+    }
+
+    // -------------------------
+    // PRODUCER + FRAUD TPS
+    // -------------------------
+    async function loadProducerTps() {
+        try {
+            const data = await fetchJson('/metrics/producer');
+            const tps = data.effectiveTransactionsPerSecond || 0;
+            document.getElementById('producerTps').textContent =
+                formatNumber(tps, 2);
+        } catch (e) {
+            console.error('Failed to load producer TPS', e);
+            document.getElementById('producerTps').textContent = 'N/A';
+        }
+    }
+
+async function loadFraudTps() {
+    try {
+        const data = await fetchJson('/metrics/fraud');
+
+        const tps = data.transactionsProcessedPerSecond || 0;
+
+        document.getElementById('fraudTps').textContent =
+            formatNumber(tps, 2);
+    } catch (e) {
+        console.error('Failed to load fraud TPS', e);
+        document.getElementById('fraudTps').textContent = 'N/A';
+    }
+}
+
+
+    // -------------------------
+    // CHARTS
+    // -------------------------
+    function updateAlertsTypeChart(latencyByType) {
+        const ctx = document.getElementById('alertsTypeChart').getContext('2d');
+
+        const labels = [];
+        const avgValues = [];
+
+        Object.entries(latencyByType || {}).forEach(([type, stats]) => {
+            labels.push(type);
+            avgValues.push((stats && stats.avgMillis) || 0);
+        });
+
+        if (!alertsTypeChart) {
+            alertsTypeChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Avg latency (ms)',
+                            data: avgValues
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { position: 'top' } },
+                    scales: {
+                        x: { stacked: false },
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        } else {
+            alertsTypeChart.data.labels = labels;
+            alertsTypeChart.data.datasets[0].data = avgValues;
+            alertsTypeChart.update();
+        }
+    }
+
+    function updateThroughputChart(labels, data) {
+        const ctx = document.getElementById('throughputChart').getContext('2d');
+        const placeholder = document.getElementById('throughputPlaceholder');
+        const hasData = (labels && labels.length > 0) && (data || []).some(v => v > 0);
+
+        if (!throughputChart) {
+            throughputChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Alerts / second',
+                        data: data,
+                        fill: false,
+                        tension: 0.25
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { title: { display: true, text: 'Time' } },
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        } else {
+            throughputChart.data.labels = labels;
+            throughputChart.data.datasets[0].data = data;
+            throughputChart.update();
+        }
+
+        placeholder.style.display = hasData ? 'none' : 'flex';
+    }
+
+    // -------------------------
+    // RESET + REFRESH
+    // -------------------------
+    async function resetMetrics() {
+        try {
+            await fetch('/metrics/reset', { method: 'POST' });
+            localThroughputHistory = [];
+            startRunTimer();
+            setTimeout(refreshAll, 300);
+        } catch (e) {
+            alert('Failed to reset metrics: ' + e.message);
+        }
+    }
+
+    async function refreshAll() {
+        try {
+            await loadDashboardMetrics();
+        } catch (e) {
+            console.error('Failed to refresh dashboard', e);
+        }
+    }
+
+    renderConfigBar();
+    startRunTimer();
+    refreshAll();
+    setInterval(refreshAll, 3000);
+</script>
+
+</body>
+</html>

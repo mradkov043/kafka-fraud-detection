@@ -1,0 +1,36 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: transaction-producer
+
+  kafka:
+    bootstrap-servers: localhost:19092
+
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
+      # Tuning knobs for the benchmarks
+      acks: all            # 1 or all
+      linger-ms: 5        
+      batch-size: 16384
+      retries: 3
+      compression-type: none
+      enable-idempotence: false
+
+    consumer:
+      group-id: producer-transport-latency-benchmark
+      auto-offset-reset: latest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+app:
+  kafka:
+    transactions-topic: transactions
+
+  generator:
+    profile: benchmark          # "normal" or "benchmark"
+    enabled: true
+    transactions-per-second: 3000

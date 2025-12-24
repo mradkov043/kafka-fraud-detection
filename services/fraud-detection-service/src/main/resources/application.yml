@@ -1,0 +1,46 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: fraud-detection-service
+
+  kafka:
+    bootstrap-servers: localhost:19092
+
+    streams:
+      application-id: fraud-detection-service
+      state-dir: ./kafka-streams-state
+      properties:
+        processing.guarantee: at_least_once
+        default.key.serde: org.apache.kafka.common.serialization.Serdes$StringSerde
+        default.value.serde: org.apache.kafka.common.serialization.Serdes$StringSerde
+
+app:
+  kafka:
+    transactions-topic: transactions
+    fraud-alerts-topic: fraud-alerts
+
+  fraud:
+    # Rule 1: HIGH_AMOUNT
+    high-amount-threshold: 3000.00
+
+    # Rule 2: HIGH_FREQUENCY
+    high-frequency-window-seconds: 30
+    high-frequency-max-transactions: 8
+
+    # Rule 3: IMPOSSIBLE_TRAVEL 
+    location-velocity-threshold-kmh: 1000.0
+    location-min-distance-km: 2000.0           
+    location-min-seconds-between-events: 0    
+    location-velocity-max-age-minutes: 120
+
+
+rules:
+  high-amount:
+    enabled: true
+  high-frequency:
+    enabled: true
+  impossible-travel:
+    enabled: true
+

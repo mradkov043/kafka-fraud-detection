@@ -1,0 +1,19 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: dashboard-service
+
+  kafka:
+    bootstrap-servers: localhost:19092
+
+    consumer:
+      group-id: fraud-dashboard
+      auto-offset-reset: latest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+app:
+  kafka:
+    fraud-alerts-topic: fraud-alerts

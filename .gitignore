@@ -1,0 +1,58 @@
+############################
+# IDEs
+############################
+.idea/
+*.iml
+*.ipr
+*.iws
+
+############################
+# Maven / Java build output
+############################
+target/
+*.class
+
+############################
+# Logs
+############################
+*.log
+logs/
+
+############################
+# OS-specific files
+############################
+.DS_Store
+Thumbs.db
+
+############################
+# Kafka / runtime data
+############################
+infra/data/
+kafka-data/
+zookeeper-data/
+
+############################
+# Environment / secrets
+############################
+.env
+.env.*
+application-*.yml
+!application.yml
+!application-dev.yml.example
+
+############################
+# Temporary / backup files
+############################
+*~
+*.swp
+*.tmp
+
+############################
+# Docker
+############################
+docker-compose.override.yml
+
+############################
+# Test & coverage output
+############################
+coverage/
